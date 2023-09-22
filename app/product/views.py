@@ -1,11 +1,12 @@
-from django.shortcuts import render
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Product
 from lesson.models import LessonView
-from django.db.models import Count, Sum
 from users.models import UserProfle
 from datetime import timedelta
+import json
+from django.contrib.auth.models import User
 # Create your views here.
 
 
@@ -15,14 +16,18 @@ class ProductStatsView(APIView):
         stats = []
 
         for product in products:
-            lesson_views = LessonView.objects.filter(lesson__products=product)
+            # Filter users who have purchased the product
+            users_with_access = User.objects.filter(userprofle__product_access=product)
+            lesson_views = LessonView.objects.filter(user__in=users_with_access, lesson__products=product)
+
             total_views = lesson_views.count()
-            total_view_time = timedelta()  # Initialize total view time as a timedelta
+            total_view_time = timedelta()
 
             for lesson_view in lesson_views:
-                total_view_time += lesson_view.end_time - lesson_view.start_time
+                if lesson_view.start_time is not None and lesson_view.end_time is not None:
+                    total_view_time += lesson_view.end_time - lesson_view.start_time
 
-            total_students = UserProfle.objects.all().count()
+            total_students = User.objects.all().count()
 
             if total_students > 0:
                 purchase_percentage = (product.users.count() / total_students) * 100
@@ -33,7 +38,7 @@ class ProductStatsView(APIView):
                 'product_id': product.id,
                 'product_name': product.name,
                 'total_views': total_views,
-                'total_view_time': total_view_time.total_seconds(),  # Convert timedelta to seconds
+                'total_view_time': total_view_time.total_seconds(),
                 'total_students': total_students,
                 'purchase_percentage': purchase_percentage,
             })

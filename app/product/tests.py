@@ -4,8 +4,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 from .models import Product
-from rest_framework.response import Response
-from django.db.models import Sum
 from lesson.models import LessonView, Lesson
 from users.models import UserProfle
 from datetime import datetime
@@ -37,8 +35,8 @@ class ProductStatsViewTest(TestCase):
         self.lesson_view2 = LessonView.objects.create(
             user=self.user2,
             lesson=self.lesson,
-            start_time=start_time,
-            end_time=end_time
+            start_time=None,
+            end_time=None
         )
         self.lesson_view3 = LessonView.objects.create(
             user=self.user3,
