@@ -18,23 +18,21 @@ class ProductStatsView(generics.ListAPIView):
 
         for product in products:
             users_with_access = User.objects.filter(userprofle__product_access=product)
+
             lesson_views = LessonView.objects.filter(user__in=users_with_access, lesson__products=product)
 
             total_views = lesson_views.count()
             total_view_time = timedelta()
-
+            
             for lesson_view in lesson_views:
                 if lesson_view.time_watched is None:
                     if lesson_view.start_time is not None and lesson_view.end_time is not None:
                         total_view_time += lesson_view.end_time - lesson_view.start_time
+                else:
+                    if lesson_view.start_time is not None and lesson_view.end_time is not None:
+                        total_view_time += lesson_view.time_watched + lesson_view.end_time - lesson_view.start_time
 
-
-            total_students = User.objects.all().count()
-
-            if total_students > 0:
-                purchase_percentage = (product.users.count() / total_students) * 100
-            else:
-                purchase_percentage = 0
+            total_students = users_with_access.count()
 
             stats.append({
                 'product_id': product.id,
@@ -42,7 +40,7 @@ class ProductStatsView(generics.ListAPIView):
                 'total_views': total_views,
                 'total_view_time': total_view_time.total_seconds(),
                 'total_students': total_students,
-                'purchase_percentage': purchase_percentage,
+                'purchase_percentage': (total_students / User.objects.count()) * 100,
             })
 
         serializer = ProductSerializer(stats, many=True)

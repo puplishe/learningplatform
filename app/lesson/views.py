@@ -8,6 +8,7 @@ from product.models import Product
 from users.models import UserProfle
 from django.contrib.auth.models import User
 from typing import List, Dict, Union
+from .utils import view_count_time
 
 class LessonListView(generics.ListAPIView):
     serializer_class = CustomLessonSerializer
@@ -26,33 +27,16 @@ class LessonListView(generics.ListAPIView):
         lesson_data = []
 
         for lesson in lessons:
-            lesson_view = LessonView.objects.filter(user=user, lesson=lesson).first()
-            if lesson_view:
-                lesson_duration_seconds = lesson.duration_seconds
-                if lesson_duration_seconds:
-                    if lesson_view.start_time is not None and lesson_view.end_time is not None:
-                        viewing_time_seconds = (lesson_view.end_time - lesson_view.start_time).total_seconds()
-                        if viewing_time_seconds >= 0.8 * lesson_duration_seconds:
-                            status = 'Completed'
-                        elif lesson_view.time_watched is not None:
-                            lesson_view.time_watched += viewing_time_seconds
-                        else:
-                            status = 'Not Completed'
-                            lesson_view.time_watched = viewing_time_seconds
-                    else:
-                        status = 'Not Completed'
-                else:
-                    status = 'Not Completed'
-                viewing_time = int(viewing_time_seconds) if 'viewing_time_seconds' in locals() else 0
-            else:
-                status = 'Not Completed'
-                viewing_time = 0
+            duration = lesson.duration_seconds
+            lesson_view = LessonView.objects.select_for_update().filter(user=user, lesson=lesson).first()
+            data = view_count_time(duration, lesson_view)
+            
             lesson_view.save()
             lesson_data.append({
                 'id': lesson.id,
                 'title': lesson.name,
-                'status': status,
-                'viewing_time': viewing_time,
+                'status': data.status,
+                'viewing_time': data.time_watched,
             })
 
         return lesson_data
@@ -75,34 +59,15 @@ class LessonDetailView(generics.ListAPIView):
 
         for lesson in lessons:
             lesson_view = LessonView.objects.filter(user=user, lesson=lesson).order_by('-end_time').first()
-            if lesson_view:
-                lesson_duration_seconds = lesson.duration_seconds
-                if lesson_duration_seconds:
-                    if lesson_view.start_time is not None and lesson_view.end_time is not None:
-                        viewing_time_seconds = (lesson_view.end_time - lesson_view.start_time).total_seconds()
-                        if viewing_time_seconds >= 0.8 * lesson_duration_seconds:
-                            status = 'Completed'
-                        elif lesson_view.time_watched is not None:
-                            lesson_view.time_watched += viewing_time_seconds
-                        else:
-                            status = 'Not Completed'
-                            lesson_view.time_watched = viewing_time_seconds
-                    else:
-                        status = 'Not Completed'
-                else:
-                    status = 'Not Completed'
-
-                last_viewed = lesson_view.end_time
-            else:
-                status = 'Not Completed'
-                last_viewed = None
-            lesson_view.save()
+            data = view_count_time(lesson.duration_seconds, lesson_view)
+            data.save()
+            print(data)
             lesson_data.append({
                 'id': lesson.id,
                 'title': lesson.name,
-                'status': status,
-                'viewing_time': int(viewing_time_seconds) if status == 'Completed' else 0,
-                'last_viewed': last_viewed.strftime('%Y-%m-%d %H:%M:%S') if last_viewed else None,
+                'status': data.status,
+                'viewing_time': int(data.time_watched),
+                'last_viewed': data.end_time.strftime('%Y-%m-%d %H:%M:%S') if data.end_time else 'Not watched',
             })
 
         return lesson_data

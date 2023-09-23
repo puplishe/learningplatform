@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from .models import LessonView, Lesson
-from django.contrib.auth.models import AnonymousUser
+from .models import Lesson
 class LessonStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
