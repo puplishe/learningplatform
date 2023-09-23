@@ -1,12 +1,16 @@
-from django.test import TestCase
+from datetime import datetime
+
 from django.contrib.auth.models import User
+from django.test import TestCase
 from django.urls import reverse
+from lesson.models import Lesson, LessonView
 from rest_framework import status
 from rest_framework.test import APIClient
-from .models import Product
-from lesson.models import LessonView, Lesson
 from users.models import UserProfle
-from datetime import datetime
+
+from .models import Product
+
+
 class ProductStatsViewTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username='testuser', password='testpassword')
@@ -105,25 +109,19 @@ class ProductStatsViewTest(TestCase):
         self.user_profile5.product_access.add(self.product2)
 
     def test_product_stats_view(self):
-       
-        client = APIClient()
-        client.force_authenticate(user=self.user)  
 
-        
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
         url = reverse('product-list')
 
-        
         response = client.get(url)
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-       
-        data = response.data  
-        
+        data = response.data
+
         for item in data:
             print(item)
             self.assertIn(item['product_id'], [self.product1.id, self.product2.id])
             self.assertIn(item['product_name'], [self.product1.name, self.product2.name])
-        
-
- 

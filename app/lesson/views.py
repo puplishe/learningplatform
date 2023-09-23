@@ -1,19 +1,23 @@
-from django.shortcuts import get_object_or_404
-from .models import LessonView, Lesson
-from .models import LessonView, Lesson
-from rest_framework.response import Response
-from .serializers import LessonStatusSerializer, CustomLessonSerializer, SpecificProducSerializer
-from rest_framework import generics, status
-from product.models import Product
-from users.models import UserProfle
 from django.contrib.auth.models import User
-from typing import List, Dict, Union
+from django.shortcuts import get_object_or_404
+from product.models import Product
+from rest_framework import generics, status
+from rest_framework.response import Response
+from users.models import UserProfle
+
+from .models import Lesson, LessonView
+from .serializers import (
+    CustomLessonSerializer,
+    LessonStatusSerializer,
+    SpecificProducSerializer,
+)
 from .utils import view_count_time
+
 
 class LessonListView(generics.ListAPIView):
     serializer_class = CustomLessonSerializer
 
-    def get_queryset(self) -> List[Dict[str, Union[int, str, str, int]]]:
+    def get_queryset(self) -> list[dict[str, int | str | str | int]]:
         user = self.request.user
 
         try:
@@ -30,7 +34,7 @@ class LessonListView(generics.ListAPIView):
             duration = lesson.duration_seconds
             lesson_view = LessonView.objects.select_for_update().filter(user=user, lesson=lesson).first()
             data = view_count_time(duration, lesson_view)
-            
+
             lesson_view.save()
             lesson_data.append({
                 'id': lesson.id,
@@ -41,10 +45,11 @@ class LessonListView(generics.ListAPIView):
 
         return lesson_data
 
+
 class LessonDetailView(generics.ListAPIView):
     serializer_class = SpecificProducSerializer
 
-    def get_queryset(self) -> List[Dict[str, Union[int, str, str, int]]]:
+    def get_queryset(self) -> list[dict[str, int | str | str | int]]:
         user = self.request.user
         product_id = self.kwargs['product_id']
 
@@ -72,6 +77,7 @@ class LessonDetailView(generics.ListAPIView):
 
         return lesson_data
 
+
 class LessonCreateView(generics.CreateAPIView):
     serializer_class = LessonStatusSerializer
 
@@ -79,9 +85,9 @@ class LessonCreateView(generics.CreateAPIView):
         user = self.request.user
         product_id = self.kwargs['product_id']
         product = get_object_or_404(Product, id=product_id, users=user)
-        
+
         has_purchased = User.objects.filter(userprofle__product_access=product)
         if not has_purchased:
-            return Response({"message": "You have not purchased this product."}, status=status.HTTP_403_FORBIDDEN)
-        
-        return Response({"message": "Lesson view recorded."}, status=status.HTTP_200_OK)
+            return Response({'message': 'You have not purchased this product.'}, status=status.HTTP_403_FORBIDDEN)
+
+        return Response({'message': 'Lesson view recorded.'}, status=status.HTTP_200_OK)

@@ -1,13 +1,13 @@
-from rest_framework.response import Response
-from rest_framework import generics
-from .models import Product
-from lesson.models import LessonView
 from datetime import timedelta
-import json
-from .serializers import ProductSerializer
+
 from django.contrib.auth.models import User
-# Create your views here.
-from typing import List, Dict, Union
+from lesson.models import LessonView
+from rest_framework import generics
+from rest_framework.response import Response
+
+from .models import Product
+from .serializers import ProductSerializer
+
 
 class ProductStatsView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -23,7 +23,7 @@ class ProductStatsView(generics.ListAPIView):
 
             total_views = lesson_views.count()
             total_view_time = timedelta()
-            
+
             for lesson_view in lesson_views:
                 if lesson_view.time_watched is None:
                     if lesson_view.start_time is not None and lesson_view.end_time is not None:

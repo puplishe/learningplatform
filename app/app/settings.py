@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -67,7 +66,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API description',
     'VERSION': '1.0',
     'SCHEMA_PATH_PREFIX': '/api/',
-    'SERVE_INCLUDE_SCHEMA': False,  
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 ROOT_URLCONF = 'app.urls'

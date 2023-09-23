@@ -1,7 +1,9 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+
 # Create your models here.
 from product.models import Product
+
 
 class Lesson(models.Model):
     name = models.CharField(max_length=255, default='Default Lesson Name')
@@ -12,7 +14,7 @@ class Lesson(models.Model):
 
     def __str__(self):
         return self.title
-    
+
 
 class LessonView(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -21,5 +23,6 @@ class LessonView(models.Model):
     end_time = models.DateTimeField(null=True)
     status = models.BooleanField(default=False)
     time_watched = models.FloatField(null=True)
+
     def __str__(self):
-        return f"{self.user.username} -> {self.lesson.title}"
+        return f'{self.user.username} -> {self.lesson.title}'

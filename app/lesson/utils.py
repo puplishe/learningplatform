@@ -1,4 +1,3 @@
-
 from .models import LessonView
 
 
@@ -18,7 +17,5 @@ def view_count_time(duration: int, lesson_view: LessonView):
                         lesson_view.status = False
                     else:
                         lesson_view.status = True
-
-
 
     return lesson_view

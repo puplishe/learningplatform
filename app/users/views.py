@@ -1,12 +1,11 @@
 from django.contrib.auth.models import User
-from rest_framework import viewsets, permissions, status
-from rest_framework.response import Response
+from rest_framework import permissions, status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-
+from rest_framework.response import Response
 
 from .serializers import UserSerializer
 
-from rest_framework.authtoken.models import Token
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -19,15 +18,13 @@ class UserViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             user = serializer.save()
 
-            
             token, created = Token.objects.get_or_create(user=user)
 
-            
             response_data = {
                 'user_id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'token': token.key,  
+                'token': token.key,
             }
 
             return Response(response_data, status=status.HTTP_201_CREATED)
