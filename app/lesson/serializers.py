@@ -1,16 +1,23 @@
 from rest_framework import serializers
-from .models import Lesson
+from .models import LessonView, Lesson
 from django.contrib.auth.models import AnonymousUser
-class LessonSerializer(serializers.ModelSerializer):
+class LessonStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = '__all__'
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        user = self.context['request'].user
 
-        if not isinstance(user, AnonymousUser):
-            # Only include 'id' if the user is authenticated
-            data['user_id'] = user.id
 
-        return data
+
+
+class CustomLessonSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    status = serializers.CharField()
+    viewing_time = serializers.IntegerField()
+
+class SpecificProducSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    status = serializers.CharField()
+    viewing_time = serializers.IntegerField()
+    last_viewed = serializers.DateField()

@@ -6,93 +6,124 @@ from django.contrib.auth.models import User
 from .models import Product, Lesson, LessonView
 import json
 from users.models import UserProfle
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.shortcuts import get_object_or_404
 
-class ViewLessonTest(TestCase):
+class LessonListViewTest(TestCase):
     def setUp(self):
         # Create a test user
         self.user = User.objects.create_user(username='testuser', password='testpassword')
 
         # Create test data (products, lessons)
-        self.product = Product.objects.create(name='Test Product', owner=self.user)
-        self.lesson = Lesson.objects.create(name='Test Lesson', duration_seconds=120)
-        self.lesson.products.add(self.product)  # Associate the product with the lesson
-        
-        # Create a user profile and grant access to the product
-        self.user_profile = UserProfle.objects.create(user=self.user)
-        self.user_profile.product_access.add(self.product)
+        self.product1 = Product.objects.create(name='Product 1', owner=self.user)
+        self.product2 = Product.objects.create(name='Product 2', owner=self.user)
 
-    def test_view_lesson_detail_with_valid_data(self):
+        self.lesson1 = Lesson.objects.create(name='Lesson 1', duration_seconds=120)
+        self.lesson1.products.add(self.product1)
+
+        self.lesson2 = Lesson.objects.create(name='Lesson 2', duration_seconds=1800)
+        self.lesson2.products.add(self.product2)
+
+        # Create a user profile and grant access to products
+        self.user_profile = UserProfle.objects.create(user=self.user)
+        self.user_profile.product_access.add(self.product1)
+        self.user_profile.product_access.add(self.product2)
+        start_time = datetime.fromisoformat('2023-09-23T10:00:00+00:00')
+        end_time = datetime.fromisoformat('2023-09-23T10:10:00+00:00')
+        # Create LessonView records for lessons with varying watched times
+        self.lesson_view1 = LessonView.objects.create(user=self.user, lesson=self.lesson1, start_time=start_time, end_time=end_time, status=False)
+        self.lesson_view2 = LessonView.objects.create(user=self.user, lesson=self.lesson2, start_time=start_time, end_time=end_time, status=False)
+
+    def test_lesson_list_view_for_specific_user(self):
         # Create a test client
         client = APIClient()
         client.force_authenticate(user=self.user)  # Authenticate the user
-        
-        # Define the URL for the lesson detail endpoint
-        url = reverse('lesson-detail', args=[self.product.id])  # Use the lesson ID
 
-        # Create valid lesson view data
+        # Define the URL for the lesson list endpoint with a specific user_id
+        user_id = self.user.id  # Get the user's ID
+        url = reverse('lesson-list')
 
-        # Make a POST request to the endpoint with valid data
+        # Make a GET request to the endpoint
         response = client.get(url)
-        data = response.data[0]
+
         # Check the response status code
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(data['name'], self.lesson.name)
-        self.assertEqual(data['duration_seconds'], self.lesson.duration_seconds)
+
+        # Check that both lessons are in the response data
+        response_data = response.data
+        self.assertEqual(len(response_data), 2)
+
+        # Verify that the response data contains the expected fields (id, title, status, viewing_time)
+        for lesson_data in response_data:
+            self.assertIn('id', lesson_data)
+            self.assertIn('title', lesson_data)
+            self.assertIn('status', lesson_data)
+            self.assertIn('viewing_time', lesson_data)
+
+            # Check that status is either 'Completed' or 'Not Completed'
+            self.assertIn(lesson_data['status'], ['Completed', 'Not Completed'])
+
+            # Check that viewing_time is an integer
+            self.assertIsInstance(lesson_data['viewing_time'], int)
 
 
-    # def test_view_lesson_detail_with_invalid_data(self):
-    #     # Create a test client
-    #     client = APIClient()
-    #     client.force_authenticate(user=self.user)  # Authenticate the user
 
-    #     # Define the URL for the lesson detail endpoint
-    #     url = reverse('lesson-detail', args=[self.product.id])  # Use the product_id
 
-    #     # Create invalid lesson view data (missing start_time)
-    #     data = {
-    #         "end_time": "2023-09-23T10:30:00+00:00"
-    #     }
 
-    #     # Make a POST request to the endpoint with invalid data
-    #     response = client.post(url, data=json.dumps(data), content_type='application/json')
+class LessonDetailViewTest(TestCase):
+    def setUp(self):
+        # Create a test user
+        self.user = User.objects.create_user(username='testuser', password='testpassword')
 
-    #     # Check the response status code
-    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # Create test data (products, lessons)
+        self.product1 = Product.objects.create(name='Product 1', owner=self.user)
+        self.product2 = Product.objects.create(name='Product 2', owner=self.user)
 
-    #     # Check that the lesson view was not recorded
-    #     lesson_view = LessonView.objects.filter(user=self.user, lesson=self.lesson).first()
-    #     self.assertIsNone(lesson_view)
+        self.lesson1 = Lesson.objects.create(name='Lesson 1', duration_seconds=120)
+        self.lesson1.products.add(self.product1)
 
-    # def test_view_lesson_create_with_valid_data(self):
-    #     # Create a test client
-    #     client = APIClient()
-    #     client.force_authenticate(user=self.user)  # Authenticate the user
+        self.lesson2 = Lesson.objects.create(name='Lesson 2', duration_seconds=150)
+        self.lesson2.products.add(self.product1)
 
-    #     # Define the URL for the lesson create endpoint
-    #     url = reverse('lesson-create', args=[self.product.id])  # Use the product_id
+        # Create a user profile and grant access to products
+        self.user_profile = UserProfle.objects.create(user=self.user)
+        self.user_profile.product_access.add(self.product1)
+        self.user_profile.product_access.add(self.product2)
 
-    #     # Create valid lesson view data
-    #     data = {
-    #         "start_time": "2023-09-23T10:00:00+00:00",
-    #         "end_time": "2023-09-23T10:30:00+00:00"
-    #     }
+        # Create LessonView records for lessons that are not watched over 80%
+        start_time = datetime.fromisoformat('2023-09-23T10:00:00+00:00')
+        end_time = datetime.fromisoformat('2023-09-23T10:10:00+00:00')
+        self.lesson_view1 = LessonView.objects.create(user=self.user, lesson=self.lesson1, start_time=start_time, end_time=end_time, status=False)
+        self.lesson_view2 = LessonView.objects.create(user=self.user, lesson=self.lesson2, start_time=start_time, end_time=end_time, status=False)
 
-    #     # Make a POST request to the endpoint with valid data
-    #     response = client.post(url, data=json.dumps(data), content_type='application/json')
+    def test_lesson_detail_view_for_specific_product(self):
+        # Create a test client
+        client = APIClient()
+        client.force_authenticate(user=self.user)  # Authenticate the user
 
-    #     # Check the response status code
-    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Define the URL for the lesson detail endpoint with a specific product_id
+        product_id = self.product1.id  # Choose one of the products
+        url = reverse('lesson-detail', kwargs={'product_id': product_id})
 
-    #     # Check that the lesson view was recorded
-    #     lesson_view = LessonView.objects.filter(user=self.user, lesson=self.lesson).first()
-    #     self.assertIsNotNone(lesson_view)
-    #     self.assertTrue(lesson_view.status)
+        # Make a GET request to the endpoint
+        response = client.get(url)
 
-    def tearDown(self):
-        # Clean up test data
-        self.user.delete()
-        self.product.delete()
-        self.lesson.delete()
-        self.user_profile.delete()
+        # Check the response status code
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Check that both lessons for the chosen product are in the response data
+        response_data = response.data
+
+        # Verify that the response data contains the expected fields (status, viewing_time, last_viewed, etc.)
+        # You can add more specific assertions based on your serializer and data structure
+
+        # Example assertion for the first lesson in the response
+        print(response_data)
+        for lesson_data in response_data:
+            self.assertIn('id', lesson_data)
+            self.assertIn('title', lesson_data)
+            self.assertIn('status', lesson_data)
+            self.assertIn('viewing_time', lesson_data)
+            self.assertIn('last_viewed', lesson_data)
+            self.assertEqual(lesson_data['status'], 'Completed')
+            self.assertEqual(lesson_data['last_viewed'], '2023-09-23 10:10:00')
