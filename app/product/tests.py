@@ -58,7 +58,6 @@ class ProductStatsViewTest(TestCase):
 
         # Make a GET request to the endpoint
         response = client.get(url)
-
         # Check the response status code
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

@@ -20,6 +20,6 @@ class LessonView(models.Model):
     start_time = models.DateTimeField(null=True)
     end_time = models.DateTimeField(null=True)
     status = models.BooleanField(default=False)
-
+    time_watched = models.FloatField(null=True)
     def __str__(self):
         return f"{self.user.username} -> {self.lesson.title}"

@@ -82,7 +82,7 @@ class LessonDetailViewTest(TestCase):
         self.lesson1 = Lesson.objects.create(name='Lesson 1', duration_seconds=120)
         self.lesson1.products.add(self.product1)
 
-        self.lesson2 = Lesson.objects.create(name='Lesson 2', duration_seconds=150)
+        self.lesson2 = Lesson.objects.create(name='Lesson 2', duration_seconds=1800)
         self.lesson2.products.add(self.product1)
 
         # Create a user profile and grant access to products
@@ -118,12 +118,13 @@ class LessonDetailViewTest(TestCase):
         # You can add more specific assertions based on your serializer and data structure
 
         # Example assertion for the first lesson in the response
-        print(response_data)
         for lesson_data in response_data:
+            print(lesson_data)
             self.assertIn('id', lesson_data)
             self.assertIn('title', lesson_data)
             self.assertIn('status', lesson_data)
             self.assertIn('viewing_time', lesson_data)
             self.assertIn('last_viewed', lesson_data)
-            self.assertEqual(lesson_data['status'], 'Completed')
             self.assertEqual(lesson_data['last_viewed'], '2023-09-23 10:10:00')
+        self.assertEqual(response_data[0]['status'], 'Completed')
+        self.assertEqual(response_data[1]['status'], 'Not Completed')
