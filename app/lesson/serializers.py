@@ -22,3 +22,9 @@ class SpecificProducSerializer(serializers.Serializer):
     status = serializers.CharField()
     viewing_time = serializers.IntegerField()
     last_viewed = serializers.DateField()
+
+
+class LessonCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = '__all__'

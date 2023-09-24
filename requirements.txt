@@ -7,12 +7,14 @@ djangorestframework==3.14.0
 djangorestframework-jwt==1.11.0
 djangorestframework-simplejwt==5.3.0
 drf-spectacular==0.26.4
+drf-yasg==1.21.7
 filelock==3.12.4
 identify==2.5.29
 inflection==0.5.1
 jsonschema==4.19.1
 jsonschema-specifications==2023.7.1
 nodeenv==1.8.0
+packaging==23.1
 platformdirs==3.10.0
 pre-commit==3.4.0
 PyJWT==1.7.1

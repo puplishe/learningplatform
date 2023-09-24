@@ -116,7 +116,7 @@ class ProductStatsViewTest(TestCase):
         url = reverse('product-list')
 
         response = client.get(url)
-
+        print(response)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         data = response.data

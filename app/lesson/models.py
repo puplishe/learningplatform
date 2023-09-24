@@ -8,7 +8,7 @@ from product.models import Product
 class Lesson(models.Model):
     name = models.CharField(max_length=255, default='Default Lesson Name')
     title = models.CharField(max_length=255)
-    video_link = models.URLField()
+    video_link = models.URLField(null=True)
     duration_seconds = models.PositiveIntegerField()
     products = models.ManyToManyField(Product, related_name='lesson')
 

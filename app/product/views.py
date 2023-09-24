@@ -2,17 +2,35 @@ from datetime import timedelta
 
 from django.contrib.auth.models import User
 from lesson.models import LessonView
-from rest_framework import generics
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 
 from .models import Product
-from .serializers import ProductSerializer
+from .serializers import ProductCreateSerializer, ProductSerializer
 
 
 class ProductStatsView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
     def get(self, request) -> Response:
+        """
+        Получение статистики по продуктам.
+
+        Это представление возвращает статистику для каждого продукта, включая общее количество просмотров,
+        общее время просмотра, общее количество студентов и процент покупки.
+
+        - **product_id**: Уникальный идентификатор продукта.
+        - **product_name**: Название продукта.
+        - **total_views**: Общее количество просмотров продукта.
+        - **total_view_time**: Общее время просмотра продукта в секундах.
+        - **total_students**: Общее количество студентов, купивших продукт.
+        - **purchase_percentage**: Процент студентов, купивших продукт.
+
+        **Responses**
+
+        - 200 (Success): Список статистики продуктов.
+        """
+
         products = Product.objects.all()
         stats = []
 
@@ -45,3 +63,12 @@ class ProductStatsView(generics.ListAPIView):
 
         serializer = ProductSerializer(stats, many=True)
         return Response(serializer.data)
+
+
+class ProductCreateView(generics.CreateAPIView):
+    """
+    Создание Продукта
+    """
+    queryset = Product.objects.all()
+    serializer_class = ProductCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
